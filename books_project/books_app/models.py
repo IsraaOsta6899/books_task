@@ -24,6 +24,15 @@ class Book(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, null=True)
 
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "published_year": self.published_year,
+            "genre": self.genre,
+            "isbn": self.isbn,
+            "author": self.author,
+        }
+
 class Member(models.Model):
 
     class MembershipStatus(models.TextChoices):
@@ -55,7 +64,7 @@ class Member(models.Model):
     updated = models.DateTimeField(auto_now=True, null=True)
 
 class Borrowing(models.Model):
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, default="")
     book = models.ForeignKey(Book, on_delete=models.RESTRICT)
     borrow_date = models.DateTimeField(null=True)
     due_date = models.DateTimeField(null=True)
