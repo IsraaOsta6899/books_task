@@ -9,6 +9,7 @@ class FineComponent:
         self.fine_repository.create_fine(borrow, fine_amount, fine_status)
 
     def update_fine(self, borrow_id, fine_id, fine_amount, fine_status):
+        # TODO: check if fine exists and it is not paid yet
         self.fine_repository.update_fine(borrow_id, fine_id, fine_amount, fine_status)
 
     def get_fine(self, pk):

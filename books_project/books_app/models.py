@@ -72,10 +72,13 @@ class Borrowing(models.Model):
     reated = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, null=True)
 
+# TODO class name must start with a capital letter
 class fine(models.Model):
 
     class FineStatus(models.TextChoices):
+        # TODO: rename to RETURNED, RETURNED
         RETURNED = 'RE', 'RETURNED'
+        # TODO: rename to NOT_RETURNED, NOT_RETURNED
         NOTRETURNED = 'NOT RE', 'NOT RETURNED'
 
     borrow = models.ForeignKey(Borrowing, on_delete=models.CASCADE)
@@ -85,5 +88,6 @@ class fine(models.Model):
         choices = FineStatus.choices,
         default = FineStatus.NOTRETURNED,
     )
+    # TODO: rename to created
     reated = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, null=True)

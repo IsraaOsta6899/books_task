@@ -17,7 +17,7 @@ class BorrowingComponent:
         self.borrowing_repository.update_borrow(pk, book_pk, member_pk, borrow_date, due_date, return_date)
         borrow_instance = self.get_borrow(pk=pk)
         if borrow_instance.return_date > borrow_instance.due_date:
-
+            # TODO: move to fines component
             # we will add fine 
             return_date_str = borrow_instance.return_date
             due_date_str = borrow_instance.due_date 

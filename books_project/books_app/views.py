@@ -55,6 +55,7 @@ class BookView(View):
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
     def delete(self, request, pk):
+        # TODO: remove request.method check
         if request.method == 'DELETE':
             try:
                 self.book_component.delete_book(pk = pk)
@@ -65,6 +66,7 @@ class BookView(View):
     def put(self, request, pk):
         if request.method == 'PUT':
             try:
+                # TODO: remove the next line
                 book_instance = Book.objects.get(pk = pk)
                 data = json.loads(request.body)
                 title = data.get('title')
@@ -202,6 +204,7 @@ class BorrowingView(View):
         data = json.loads(request.body)
         member_pk = data.get('member_id')
         book_pk = data.get('book_id')
+        # Remove due_date and calculate it from borrow_date
         due_date = data.get('due_date')
         borrow_date = data.get('borrow_date')
         self.borrowing_component.create_borrow(book_pk, member_pk, borrow_date, due_date)
@@ -224,7 +227,7 @@ class BorrowingView(View):
             except Borrowing.DoesNotExist:
                 return JsonResponse({'error': 'Invalid borrow id'}, status=400)
 
-    
+    # TODO: Remove this API and replace it with POST /borrowing/{id}/end
     def put(self, request, pk):
         if request.method == 'PUT':
             try:
