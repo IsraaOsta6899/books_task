@@ -1,28 +1,44 @@
 from books_app.Reposetories.BookRepository import BookRepository
-from books_app.models import Book
+from rest_framework.exceptions import NotFound, ValidationError
+
 class BookComponent:
 
     def __init__(self):
         self.book_repository = BookRepository()
 
     def create_book(self, title, published_year, genr, isbn, author_id):
-        #  TODO: validate required fields
-        self.book_repository.create_book(title, published_year, genr, isbn, author_id)
+        exists = self.book_repository.check_isbn_exist(isbn)
+        if title != "" and not exists:
+            self.book_repository.create_book(title, published_year, genr, isbn, author_id)
+        else:
+            raise ValidationError(detail="title is required or isbn is already exists", code=400)
 
-    def update_book(self, pk, title, published_year, genr, isbn, author_id):
-        #  TODO: check if book exists and raise a ResourceException if it doesn't
-        self.book_repository.update_book(pk, title, published_year, genr, isbn, author_id)
+    def update_book(self, id, title, published_year, genr, isbn, author_id):
+        book = self.book_repository.get_book(pk=id)
+        if book is None:
+            raise NotFound("book not found", code=404)
+        else:
+            exists = self.book_repository.check_isbn_exist(isbn)
+            if title != "" and not exists:
+                self.book_repository.update_book(id, title, published_year, genr, isbn, author_id)
+            else:
+                raise ValidationError(detail="title is required or isbn is already exists", code=400)
 
-    def get_book(self, pk):
-        book = self.book_repository.get_book(pk)
+    def get_book(self, id):
+        book = self.book_repository.get_book(id)
+        if book is None:
+            raise NotFound("book not found", code=404)
         return book
-    # TODO: rename to get_books
-    def get_books_list(self):
-        # TODO: rename objects to books
-        objects = self.book_repository.get_list_of_book()
-        return objects
     
-    def delete_book(self, pk):
-        self.book_repository.delete_book(pk)
+    def get_books_list(self):
+        books_list = self.book_repository.get_book_list()
+        return books_list
+    
+    def delete_book(self, id):
+        book = self.book_repository.get_book(pk=id)
+        if book is None:
+            raise NotFound("book not found", code=404)
+        else:
+            self.book_repository.delete_book(id)
 
         

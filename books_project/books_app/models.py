@@ -1,93 +1,91 @@
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+import re
+from marshmallow import ValidationError
+from sqlalchemy import DateTime, Table, Column, Integer, ForeignKey, String, create_engine, desc, Table, Date, func, Enum
+from sqlalchemy.ext.declarative import declarative_base
+from enum import Enum as MyEnum
+from sqlalchemy.orm import relationship, sessionmaker
 
+Base = declarative_base()
+def validate_fixed_length():
+    print("")
+    
+class Author(Base):
+    __tablename__ = 'author'
+    id = Column(Integer, primary_key = True, autoincrement = True)
+    name = Column(String(100), nullable = False)
+    birth_date = Column(Date, nullable = True)
+    nationality = Column(String(100), nullable = True)
+    books = relationship('Book', back_populates='author', cascade='all, delete, save-update')
+    created = Column(DateTime, nullable=True)
+    updated = Column(DateTime, nullable=True)
 
-def validate_fixed_length(value):
-    if len(value) != 13:
-        raise ValidationError('This field must be exactly 13 characters long.')
+    def __repr__(self):
+        return (f'author name is {self.name}')
+    
+class Book(Base):
+    __tablename__ = 'book'
+    id = Column(Integer, primary_key = True, autoincrement = True)
+    title = Column(String(200), nullable = False)
+    published_year = Column(Integer, nullable = False)
+    genre = Column(String(100), nullable=True)
+    isbn = Column(String(13), nullable = False, unique = True)
+    borrowings = relationship("Borrowing", back_populates="book", cascade="all, delete, save-update")
+    author_id = Column(ForeignKey('author.id', ondelete='CASCADE', onupdate='CASCADE'))
+    author = relationship('Author', back_populates='books', cascade='all, delete, save-update')
+    created = Column(DateTime, nullable=True)
+    updated = Column(DateTime, nullable=True)
 
-class Author(models.Model):
-    name = models.CharField(max_length=200)
-    birth_date = models.DateField()
-    nationality = models.CharField(max_length=200)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, null=True)
+    def __repr__(self):
+        return f"<Book(id={self.id}, isbn='{self.isbn}')>"
 
+class MembershipStatus(MyEnum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"  
 
-class Book(models.Model):
-    title = models.CharField(max_length=255, null=False)
-    published_year = models.IntegerField(null=False)
-    genre = models.CharField(max_length=255, null=True)
-    isbn = models.CharField(max_length=13, unique=True, validators=[validate_fixed_length])
-    author = models.ForeignKey(Author, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, null=True)
+class Member(Base):
+    __tablename__ = 'member'
+    id = Column(Integer, primary_key = True, autoincrement = True)
+    name = Column(String(100), nullable = False)
+    email = Column(String(100), unique=True, nullable=False)
+    phone_number = Column(String(10), unique=True, nullable=True)
+    address = Column(String(50), nullable=True)
+    membership_date = Column(DateTime, nullable=True)
+    membership_status = Column(Enum(MembershipStatus), nullable=False, default=MembershipStatus.ACTIVE)
+    borrowings = relationship('Borrowing', back_populates="member", cascade= "all, delete, save-update")
+    created = Column(DateTime, nullable=True)
+    updated = Column(DateTime, nullable=True)
 
-    def to_dict(self):
-        return {
-            "title": self.title,
-            "published_year": self.published_year,
-            "genre": self.genre,
-            "isbn": self.isbn,
-            "author": self.author,
-        }
+class Borrowing(Base):
+    __tablename__ = 'borrowing'
+    id = Column(Integer, primary_key = True, autoincrement = True)
+    borrow_date = Column(Date, nullable=False)
+    due_date = Column(Date,  nullable=False)
+    return_date = Column(Date, nullable=True)
+    book_id = Column(ForeignKey("book.id", ondelete="CASCADE", onupdate='CASCADE'))
+    member_id = Column(ForeignKey("member.id", ondelete="CASCADE", onupdate='CASCADE'))
+    member = relationship("Member", back_populates="borrowings", cascade="all, delete, save-update")
+    book = relationship("Book", back_populates="borrowings", cascade="all, delete, save-update")
+    fine = relationship('Fine', back_populates='borrow', cascade="all, delete, save-update")
+    created = Column(DateTime, nullable=True)
+    updated = Column(DateTime, nullable=True)
 
-class Member(models.Model):
+class FineStatus(MyEnum):
+        RETURNED = 'RETURNED'
+        NOTRETURNED = 'NOT-RETURNED'
+class Fine(Base):
+    __tablename__ = 'fine'
+    
+    id = Column(Integer, primary_key = True, autoincrement = True)
+    fine_amount = Column(Integer, nullable=True)
+    fine_status = Column(Enum(FineStatus), default=FineStatus.NOTRETURNED)
+    borrow_id = Column(ForeignKey('borrowing.id', ondelete='CASCADE', onupdate='CASCADE'))
+    borrow = relationship('Borrowing', back_populates='fine', cascade="all, delete, save-update")
+    created = Column(DateTime, nullable=True)
+    updated = Column(DateTime, nullable=True)
 
-    class MembershipStatus(models.TextChoices):
-        ACTIVE = 'AC', 'Active'
-        INACTIVE = 'IN', 'Inactive'
+engine = create_engine('sqlite:///taskdb.db')
+Session = sessionmaker(bind=engine)
+session = Session()
 
-    phone_regex = RegexValidator(
-        regex=r'^\d{9,10}$',  # Allows 9 to 10 digits only
-        message="Phone number must be entered as 9 to 10 digits (e.g., '1234567890')."
-    )
-    name = models.CharField(max_length=255, null=False)
-    email = models.EmailField(unique=True, null=False)
-    phone_number = models.CharField(
-        max_length=10,
-        validators=[
-            phone_regex
-        ],
-        blank=True,  # Set to False if you want to make it required
-        null=True    # Set to False if you want to avoid NULL in the database
-    )
-    address = models.CharField(max_length=255, null=True)
-    membership_date = models.DateTimeField(null=True)
-    membership_status = models.CharField(
-        max_length=2,
-        choices=MembershipStatus.choices,
-        default=MembershipStatus.ACTIVE,
-    )
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, null=True)
-
-class Borrowing(models.Model):
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, default="")
-    book = models.ForeignKey(Book, on_delete=models.RESTRICT)
-    borrow_date = models.DateTimeField(null=True)
-    due_date = models.DateTimeField(null=True)
-    return_date = models.DateTimeField(null=True)
-    reated = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, null=True)
-
-# TODO class name must start with a capital letter
-class fine(models.Model):
-
-    class FineStatus(models.TextChoices):
-        # TODO: rename to RETURNED, RETURNED
-        RETURNED = 'RE', 'RETURNED'
-        # TODO: rename to NOT_RETURNED, NOT_RETURNED
-        NOTRETURNED = 'NOT RE', 'NOT RETURNED'
-
-    borrow = models.ForeignKey(Borrowing, on_delete=models.CASCADE)
-    fine_amount = models.IntegerField()
-    fine_status = models.CharField(
-        max_length = 7,
-        choices = FineStatus.choices,
-        default = FineStatus.NOTRETURNED,
-    )
-    # TODO: rename to created
-    reated = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, null=True)
+# Create all tables in the database
+Base.metadata.create_all(engine)
