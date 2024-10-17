@@ -1,37 +1,43 @@
 from datetime import datetime
 from books_app.Reposetories.BorrowingRepository import BorrowingRepository
 from books_app.Reposetories.FineRepository import FineRepository
+from books_app.components.BookComponent import BookComponent
+from books_app.components.MemberComponent import MemberComponent
+from books_app.components.FineComponent import FineComponent
+from rest_framework.exceptions import PermissionDenied, NotFound
 
-from books_app.models import Borrowing
 class BorrowingComponent:
 
     def __init__(self):
         self.borrowing_repository = BorrowingRepository()
-        self.fine_repository = FineRepository()
+        self.fine_component = FineComponent()
+        self.book_component = BookComponent()
+        self.member_component = MemberComponent()
 
-    def create_borrow(self, book_pk, member_pk, borrow_date, due_date):
-        
-        self.borrowing_repository.create_borrowing(book_pk, member_pk, borrow_date, due_date)
+    def create_borrow(self, borrow_date, book_id, member_id):
+        try:
+            book = self.book_component.get_book(book_id)
+            member = self.member_component.get_member(member_id)
+            self.borrowing_repository.create_borrowing(borrow_date, book, member)
+        except:
+            raise Exception("")
 
-    def update_borrow(self, pk, book_pk, member_pk, borrow_date, due_date, return_date):
-        self.borrowing_repository.update_borrow(pk, book_pk, member_pk, borrow_date, due_date, return_date)
-        borrow_instance = self.get_borrow(pk=pk)
-        if borrow_instance.return_date > borrow_instance.due_date:
-            # TODO: move to fines component
-            # we will add fine 
-            return_date_str = borrow_instance.return_date
-            due_date_str = borrow_instance.due_date 
+    def update_borrow(self, id, return_date):
+        borrow = self.borrowing_repository.get_borrow(id=id)
+        if borrow is None:
+            raise NotFound("")
+        else:
+            self.borrowing_repository.update_borrow(id, return_date)
+            borrow_instance = self.get_borrow(id)
+            self.fine_component.create_fine(borrow_instance)
 
-            number_of_late = (datetime.strptime(return_date_str, "%Y-%m-%d") - datetime.strptime(due_date_str, "%Y-%m-%d")).days
-            fine_amount = number_of_late * 2
-            self.fine_repository.create_fine(borrow=borrow_instance, fine_amount=fine_amount ,fine_status="RETURNED")
-
-    def get_borrow(self, pk):
-        book = self.borrowing_repository.get_borrow(pk)
-        return book
+    def get_borrow(self, id):
+        borrowing = self.borrowing_repository.get_borrow(id)
+        if borrowing is not None:
+            return borrowing
+        else:
+            raise NotFound("borrowing not found")
     
     def get_borrowing_list(self):
-        objects = self.borrowing_repository.get_list_of_borrowing()
-        return objects
-
-        
+        borrowings_list = self.borrowing_repository.get_borrowings()
+        return borrowings_list

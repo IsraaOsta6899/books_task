@@ -18,7 +18,7 @@ class CustomCsrfMiddleware(MiddlewareMixin):
 
         # return None  # Proceed to the next middleware or view
 
-    def process_response(self, request, response):
-        # Optionally set a CSRF token in the response for clients
-        response['X-CSRFToken'] = get_token(request)
-        return response
+    # def process_response(self, request, response):
+    #     # Optionally set a CSRF token in the response for clients
+    #     response['X-CSRFToken'] = get_token(request)
+    #     return response
