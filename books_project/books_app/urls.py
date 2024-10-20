@@ -17,10 +17,3 @@ urlpatterns = [
     path(r'', include(borrowings_router.urls)),
     path(r'', include(members_router.urls)),
 ]
-
-# urlpatterns = [
-#     path('fines/<int:pk>', FineView.as_view()),
-#     path('fines', FineView.as_view()),
-#     path('members/<int:member_id>/fines', FineView.as_view()),
-#     path('borrow/<int:borrow_id>/fines/<int:fine_id>', FineView.as_view())
-# ]
