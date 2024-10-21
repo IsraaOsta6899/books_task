@@ -5,21 +5,22 @@ from books_app.repositories.author_repository import AuthorRepository
 
 class BookComponent:
 
-    def create_book(self, title, published_year, genr, isbn, author_id):
+    def create_book(self, title: str, published_year: int, genr: str, isbn: str, author_id: int):
         exists = BookRepository.check_isbn_exist(isbn)
         author = AuthorRepository.get_author(author_id=author_id)
         if not author:
             raise NotFound("author not found", code=404)
-        elif title != "":
+        elif not title:
             raise ValidationError(detail="title is required", code=400)
         elif exists:
             raise ValidationError(detail="isbn is already exists", code=400)
-        BookRepository.create_book(title, published_year, genr, isbn, author=author)
+        BookRepository.create_book(title=title, published_year=published_year,
+                                    genr=genr, isbn=isbn, author=author)
 
         
-    def update_book(self, book_id, title, published_year, genr, isbn, author_id, **kwargs):
+    def update_book(self, book_id: int, title: str, published_year: int, genr: str, isbn: str, author_id: int, **kwargs):
         book_data = {
-        'id': id,
+        'id': book_id,
         'title': title,
         'published_year': published_year,
         'genre': genr,
@@ -44,7 +45,7 @@ class BookComponent:
         BookRepository.update_book(book_id=book_id, data=book_data, commit=True)
                
 
-    def get_book(self, book_id):
+    def get_book(self, book_id: int):
         book = BookRepository.get_book(book_id)
         if book is None:
             raise NotFound("book not found", code=404)
@@ -54,10 +55,10 @@ class BookComponent:
         books = BookRepository.get_books()
         return books
     
-    def delete_book(self, book_id):
+    def delete_book(self, book_id: int):
         book = BookRepository.get_book(pk=book_id)
         if book is None:
             raise NotFound("book not found", code=404)
-        BookRepository.delete_book(book_id, commit=True)
+        BookRepository.delete_book(book_id=book_id, commit=True)
 
         

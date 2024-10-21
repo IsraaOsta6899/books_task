@@ -1,7 +1,8 @@
+from typing import Any, Dict
 from books_app.models import Author
 from books_app.models import session
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
-from datetime import datetime
+from datetime import date, datetime
 
 
 
@@ -11,8 +12,8 @@ class AuthorRepository:
         print("this is AuthorRepository class")
 
     @staticmethod
-    def create_author(self, name, birth_date, nationality, commit=True):
-        author = Author(name=name, nationality=nationality,birth_date=birth_date )
+    def create_author(name, birth_date: date, nationality: str, commit=True):
+        author = Author(name=name, nationality=nationality, birth_date=birth_date)
         session.add(author)
 
         if commit:
@@ -21,17 +22,17 @@ class AuthorRepository:
             session.flush()
 
     @staticmethod
-    def update_author(self, author_id, data, commit=True):
+    def update_author(author_id: int, data: Dict[str, Any], commit: bool=True):
         query = session.query(Author).\
             filter(Author.id == author_id).\
             update(data, synchronize_session=False)
         if commit:
             session.commit()   
         else:
-                session.flush()
+            session.flush()
 
     @staticmethod
-    def delete_author(self, author_id, commit=True):
+    def delete_author(author_id: int, commit=True):
         query = session.query(Author).\
             filter(Author.id == author_id).\
             delete()
@@ -41,11 +42,11 @@ class AuthorRepository:
             session.flush()
         
     @staticmethod
-    def get_author(self, author_id):
+    def get_author(author_id: int):
         author = session.query(Author).filter(Author.id == author_id).one_or_none()
         return author
         
     @staticmethod
-    def get_authors(self):
+    def get_authors():
         authors = session.query(Author).all()
         return authors

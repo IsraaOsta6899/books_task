@@ -9,7 +9,7 @@ class FineRepository:
     def __init__(self):
         print("this is FineRepository class")
     @staticmethod
-    def create_fine(self, borrow, fine_amount, fine_status, commit=True):
+    def create_fine(borrow, fine_amount, fine_status, commit=True):
         fine_instance = Fine(borrow=borrow, fine_amount=fine_amount, fine_status=fine_status)
         session.add(fine_instance)
         if commit:
@@ -17,7 +17,7 @@ class FineRepository:
         else:
             session.flush()
     @staticmethod
-    def update_fine(self, fine_id, data, commit=True):
+    def update_fine(fine_id, data, commit=True):
         fine_instance = session.query(Fine).\
             filter(Fine.id == fine_id).\
             update(data, synchronize_session=False)
@@ -27,11 +27,11 @@ class FineRepository:
             session.flush()
 
     @staticmethod
-    def get_fine(self, fine_id):
+    def get_fine(fine_id):
         fine = session.query(Fine).filter(Fine.id == fine_id).one_or_none()
         return fine
 
     @staticmethod
-    def get_member_fines(self, member_id):
+    def get_member_fines(member_id):
         member_fines = session.query(Fine).options(joinedload(Fine.borrow)).filter(Borrowing.member_id == member_id). all()
         return member_fines
