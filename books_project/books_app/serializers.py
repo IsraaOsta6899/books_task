@@ -1,7 +1,7 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, SQLAlchemyAutoSchemaOpts,SQLAlchemySchema
-from books_app.models import Author, Book, Member, Borrowing, Fine, MembershipStatus, FineStatus
-from marshmallow import Schema, ValidationError, fields
-from rest_framework import serializers
+from books_app.models import Author, Book, Member, Borrowing, Fine
+from marshmallow import ValidationError, fields
+from constants import MembershipStatus, FineStatus
+from marshmallow_sqlalchemy import  SQLAlchemyAutoSchema, SQLAlchemyAutoSchemaOpts, SQLAlchemySchema
 
 class BaseModelSchemaOpts(SQLAlchemyAutoSchemaOpts):
     def __init__(self, meta, *args, **kwargs):
@@ -9,8 +9,10 @@ class BaseModelSchemaOpts(SQLAlchemyAutoSchemaOpts):
         self.include_fk = getattr(meta, 'include_fk', True)
         self.include_relationships = getattr(meta, "include_relationships", True)
 
+
 class BaseModelSchema(SQLAlchemyAutoSchema):
     OPTIONS_CLASS = BaseModelSchemaOpts
+
 
 class AuthorSchemaSerializer(BaseModelSchema):
     class Meta:
@@ -38,6 +40,8 @@ class BookSchemaSerializer(SQLAlchemyAutoSchema):
             'created',
             'updated'
         )
+
+
 class MembershipStatusField(fields.Field):
     def _serialize(self, value, attr, obj, **kwargs):
         # Convert enum to its value for JSON serialization
@@ -50,9 +54,11 @@ class MembershipStatusField(fields.Field):
             return MembershipStatus(value)
         except ValueError:
             raise ValidationError("Invalid membership status")
-            
-class MemberSchemaSerializer(SQLAlchemyAutoSchema):   
+
+
+class MemberSchemaSerializer(SQLAlchemyAutoSchema):
     membership_status = MembershipStatusField()
+
     class Meta:
         model = Member
         fields = (
@@ -65,8 +71,8 @@ class MemberSchemaSerializer(SQLAlchemyAutoSchema):
             'membership_status',
         )
 
-class BorrowingSchemaSerializer(SQLAlchemyAutoSchema):
 
+class BorrowingSchemaSerializer(SQLAlchemyAutoSchema):
     class Meta:
         model = Borrowing
         fields = (
@@ -77,6 +83,7 @@ class BorrowingSchemaSerializer(SQLAlchemyAutoSchema):
             'book_id',
             'member_id',
         )
+
 
 class FineStatusField(fields.Field):
     def _serialize(self, value, attr, obj, **kwargs):
@@ -90,9 +97,12 @@ class FineStatusField(fields.Field):
             return FineStatus(value)
         except ValueError:
             raise ValidationError("Invalid membership status")
+
+
 class FineSchemaSerializer(SQLAlchemyAutoSchema):
     borrow = fields.Nested(BorrowingSchemaSerializer)  # Include borrowing details in fine
     fine_status = FineStatusField()
+
     class Meta:
         model = Fine
         fields = (
@@ -102,4 +112,3 @@ class FineSchemaSerializer(SQLAlchemyAutoSchema):
             'fine_amount',
             'borrow'
         )
-

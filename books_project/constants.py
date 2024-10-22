@@ -1,5 +1,5 @@
-from sqlalchemy import Enum, inspect
-
+from sqlalchemy import Enum
+import inspect
 
 class HarriEnum(object):
     @classmethod

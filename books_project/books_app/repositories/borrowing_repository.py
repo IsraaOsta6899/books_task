@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from rest_framework.exceptions import PermissionDenied, NotFound
 
+
 class BorrowingRepository:
 
     def __init__(self):
@@ -19,8 +20,8 @@ class BorrowingRepository:
 
     @staticmethod
     def update_borrow(borrowing_id, data, commit=True):
-        borrow = session.query(Borrowing).\
-            filter(Borrowing.id == borrowing_id).\
+        borrow = session.query(Borrowing). \
+            filter(Borrowing.id == borrowing_id). \
             update(data, synchronize_session=False)
         if commit:
             session.commit()
