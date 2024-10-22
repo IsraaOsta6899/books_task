@@ -1,19 +1,19 @@
-from django.urls import path
+from django.urls import include, path
+from books_app.views import BookViewSet, AuthorViewSet, MemberViewSet, BorrowingViewSet, FineViewSet
+from rest_framework_nested import routers
 
-from books_app.views import BookView, AuthorView, MemberView, get_csrf_token, BorrowingView, FineView
+router = routers.SimpleRouter()
+router.register(r'books', BookViewSet, basename='book')
+router.register(r'authors', AuthorViewSet, basename='author')
+router.register(r'members', MemberViewSet, basename='member')
+router.register(r'borrowings', BorrowingViewSet, basename='borrowing')
+members_router = routers.NestedSimpleRouter(router, r'members', lookup='member')
+members_router.register(r'fines', FineViewSet, basename='member-fines')
+borrowings_router = routers.NestedSimpleRouter(router, r'borrowings', lookup='borrowing')
+borrowings_router.register(r'fines', FineViewSet, basename='borrowing-fines')
 
 urlpatterns = [
-    path('books', BookView.as_view()),
-    path('books/<int:pk>', BookView.as_view()),
-    path('authors', AuthorView.as_view()),
-    path('authors/<int:pk>', AuthorView.as_view()),
-    path('members', MemberView.as_view()),
-    path('members/<int:pk>', MemberView.as_view()),
-    path('get-csrf-token/', get_csrf_token, name='get_csrf_token'),
-    path('borrowing', BorrowingView.as_view()),
-    path('borrowing/<int:pk>', BorrowingView.as_view()),
-    path('fines/<int:pk>', FineView.as_view()),
-    path('fines', FineView.as_view()),
-    path('members/<int:member_id>/fines', FineView.as_view()),
-    path('borrow/<int:borrow_id>/fines/<int:fine_id>', FineView.as_view())
+    path(r'', include(router.urls)),
+    path(r'', include(borrowings_router.urls)),
+    path(r'', include(members_router.urls)),
 ]

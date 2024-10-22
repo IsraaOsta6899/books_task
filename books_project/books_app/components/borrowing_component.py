@@ -1,0 +1,58 @@
+from datetime import datetime, timedelta
+from typing import List
+
+from books_app.models import Borrowing
+from books_app.repositories.borrowing_repository import BorrowingRepository
+from books_app.repositories.book_repository import BookRepository
+from books_app.repositories.member_repository import MemberRepository
+from books_app.repositories.fine_repository import FineRepository
+from books_app.components.fine_component import FineComponent
+from rest_framework.exceptions import NotFound
+
+from constants import DateTimeFormat
+
+class BorrowingComponent:
+
+    @staticmethod
+    def create_borrow(borrow_date: str, book_id: int, member_id: int):
+        book = BookRepository.get_book(book_id=book_id)
+        member = MemberRepository.get_member(member_id=member_id)
+        if not book:
+            raise NotFound("book not found")
+        elif not member:
+            raise NotFound("member not found")
+        borrowing_date = datetime.strptime(borrow_date, DateTimeFormat.ISO_DATE_FORMAT).date()
+        borrowing_due_date = borrowing_date + timedelta(days=7)
+        BorrowingRepository.create_borrowing(borrow_date=borrowing_date, due_date=borrowing_due_date, book=book, member=member, commit=True)
+
+    @staticmethod
+    def update_borrow(borrowing_id: int, return_date: str):
+        date = datetime.strptime(return_date, DateTimeFormat.ISO_DATE_FORMAT).date()
+        borrow_data = {
+        'id': borrowing_id,
+        'return_date': date,
+        }
+        borrow = BorrowingRepository.get_borrow(borrowing_id=borrowing_id)
+        if borrow is None:
+            raise NotFound("borrow not found")
+        BorrowingRepository.update_borrow(borrowing_id=borrowing_id, data=borrow_data)
+        borrow_instance = BorrowingRepository.get_borrow(borrowing_id=borrowing_id)
+        if borrow_instance.return_date > borrow_instance.due_date:
+            return_date_str = borrow_instance.return_date
+            due_date_str = borrow_instance.due_date
+
+            number_of_late = (return_date_str - due_date_str).days
+            fine_amount = number_of_late * 2
+            FineRepository.create_fine(borrow=borrow_instance, fine_amount=fine_amount)
+
+    @staticmethod
+    def get_borrow(borrowing_id: int) -> Borrowing:
+        borrowing = BorrowingRepository.get_borrow(borrowing_id=borrowing_id)
+        if borrowing is None:
+            raise NotFound("borrowing not found")
+        return borrowing
+
+    @staticmethod
+    def get_borrowings() -> List[Borrowing]:
+        borrowings = BorrowingRepository.get_borrowings()
+        return borrowings
